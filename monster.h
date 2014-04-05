@@ -1,19 +1,18 @@
 // -*-c++-*-
-#ifndef PLAYER_H
-#define PLAYER_H
+#ifndef MONSTER_H
+#define MONSTER_H
 
 #include "world.h"
 #include "creature.h"
 #include <string>
 
-class World;
-
-class Player: public Creature
+class Monster : public Creature
 {
 public:
-    Player(World *w, std::string name);
+    Monster(World *w, std::string name);
 
     void moveBy(int mx, int my);
+    void act();
 };
 
 #endif

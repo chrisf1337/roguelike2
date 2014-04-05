@@ -1,13 +1,6 @@
 #include "creature.h"
 #include <cstdlib>
 
-Creature::Creature()
-{
-    x = 0;
-    y = 0;
-    world = NULL;
-}
-
 Creature::Creature(World *w)
 {
     x = 0;
@@ -15,10 +8,14 @@ Creature::Creature(World *w)
     world = w;
 }
 
-// Creature::~Creature()
-// {
-//     if(world != NULL)
-//     {
-//         delete world;
-//     }
-// }
+// implemented by child classes
+void Creature::moveBy(int mx, int my)
+{
+
+}
+
+// implemented by child classes
+void Creature::act()
+{
+
+}

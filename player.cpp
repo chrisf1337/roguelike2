@@ -1,14 +1,17 @@
+#include <string>
 #include "player.h"
 #include "creature.h"
 
-Player::Player() : Creature()
+Player::Player(World *w, std::string name) : Creature(w)
 {
     glyph = '@';
-}
-
-Player::Player(World *w) : Creature(w)
-{
-    glyph = '@';
+    level = 1;
+    hp = 10;
+    mp = 10;
+    exp = 0;
+    maxhp = 10;
+    maxmp = 10;
+    expToNextLevel = 5;
 }
 
 void Player::moveBy(int mx, int my)

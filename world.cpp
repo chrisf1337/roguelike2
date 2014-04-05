@@ -1,4 +1,6 @@
 #include "world.h"
+#include "monster.h"
+// #include "monster.h"
 #include <stdio.h>
 #include <time.h>
 #include <cstdlib>
@@ -78,10 +80,17 @@ void World::addToWorld(Creature *c)
 {
     c->world = this;
     creatures.push_back(c);
-    placeRandomly(c);
+    add(c);
 }
 
-void World::placeRandomly(Creature *c)
+void World::addToWorld(Creature *c, int x, int y)
+{
+    c->world = this;
+    creatures.push_back(c);
+    add(c, x, y);
+}
+
+void World::add(Creature *c)
 {
     c->x = rand() % width;
     c->y = rand() % height;
@@ -92,4 +101,10 @@ void World::placeRandomly(Creature *c)
         c->y = rand() % height;
         tt = tiles[c->x][c->y].type;
     }
+}
+
+void World::add(Creature *c, int x, int y)
+{
+    c->x = x;
+    c->y = y;
 }

@@ -3,10 +3,11 @@
 #include <iostream>
 #include "player.h"
 #include "world.h"
+#include "monster.h"
 
 // std::vector<std::vector<char> > world(90, std::vector<char>::vector(90, '.'));
 World world;
-Player player;
+Player player(&world, "player");
 
 int screenWidth;
 int screenHeight;
@@ -70,12 +71,35 @@ void displayTiles(WINDOW* window, int left, int top)
     }
 }
 
-void displayOutput(WINDOW* window)
+void displayOutput(WINDOW *window)
 {
     int left = getScrollX();
     int top = getScrollY();
     displayTiles(window, left, top);
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_CYAN, COLOR_BLACK);
+
+    wattron(window, COLOR_PAIR(2));
+    for(std::vector<Creature*>::iterator it = world.creatures.begin(); it != world.creatures.end(); it++)
+    {
+        mvwprintw(window, (*it)->y - top, (*it)->x - left, "%c", (*it)->glyph);
+    }
+    wattroff(window, COLOR_PAIR(2));
+
+    wattron(window, COLOR_PAIR(1));
     mvwprintw(window, player.y - top, player.x - left, "%c", player.glyph);
+    wattroff(window, COLOR_PAIR(1));
+}
+
+void updatePlayerStats(WINDOW *window)
+{
+    wclear(window);
+    box(window, 0, 0);
+    mvwprintw(window, 1, 1, "Lv:  %d", player.level);
+    mvwprintw(window, 2, 1, "HP:  %d/%d", player.hp, player.maxhp);
+    mvwprintw(window, 3, 1, "MP:  %d/%d", player.mp, player.maxmp);
+    mvwprintw(window, 4, 1, "Exp: %d/%d", player.exp, player.expToNextLevel);
+    wrefresh(window);
 }
 
 void respondToUserInput(int input)
@@ -104,28 +128,57 @@ int main()
     noecho();
     cbreak();
     curs_set(0);
+    start_color();
 
-    screenWidth = COLS - 10;
+    screenWidth = COLS - 30;
     screenHeight = LINES - 10;
 
     WINDOW* window = create_newwin(screenHeight, screenWidth, 0, 0);
-    WINDOW* debug = create_newwin(4, 20, screenHeight, 0);
+    WINDOW* debug = create_newwin(LINES - screenHeight, COLS, screenHeight, 0);
+    WINDOW* status = create_newwin(screenHeight, COLS - screenWidth, 0, screenWidth);
     keypad(window, TRUE);
 
-    world.addToWorld(&player);
+
+    world.add(&player, 99, 99);
+
+    Monster m1(&world, "monster");
+    world.addToWorld(&m1, 99, 99);
+    Monster m2(&world, "monster");
+    world.addToWorld(&m2, 99, 99);
 
     displayOutput(window);
-    mvwprintw(debug, 0, 0, "%3d %3d", player.x, player.y);
-    mvwprintw(debug, 1, 0, "%d", world.tiles[player.x][player.y].type);
+    mvwprintw(debug, 1, 1, "%3d %3d", player.x, player.y);
+    mvwprintw(debug, 2, 1, "%d", world.tiles[player.x][player.y].type);
+    for(int i = 0; i < world.creatures.size(); i++)
+    {
+        mvwprintw(debug, i + 3, 1, "%3d %3d", world.creatures[i]->x, world.creatures[i]->y);
+
+    }
+    box(debug, 0, 0);
+
+    updatePlayerStats(status);
+
     wrefresh(window);
     wrefresh(debug);
+    wrefresh(status);
+
     int input;
     while((input = wgetch(window)) != 113)
     {
         respondToUserInput(input);
         displayOutput(window);
-        mvwprintw(debug, 0, 0, "%3d %3d", player.x, player.y);
-        mvwprintw(debug, 1, 0, "%d", world.tiles[player.x][player.y].type);
+        mvwprintw(debug, 1, 1, "%3d %3d", player.x, player.y);
+        mvwprintw(debug, 2, 1, "%d", world.tiles[player.x][player.y].type);
+        for(int i = 0; i < world.creatures.size(); i++)
+        {
+            mvwprintw(debug, i + 3, 1, "%3d %3d", world.creatures[i]->x, world.creatures[i]->y);
+
+        }
+        for(std::vector<Creature*>::iterator it = world.creatures.begin(); it != world.creatures.end(); it++)
+        {
+            (*it)->act();
+        }
+        updatePlayerStats(status);
         wrefresh(debug);
     }
     clrtoeol();

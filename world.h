@@ -29,7 +29,6 @@ class World
 {
 private:
     void smooth(int times);
-    void placeRandomly(Creature *c);
 
 public:
     World();
@@ -39,8 +38,10 @@ public:
     std::vector<Creature*> creatures;
     Tile tiles[WIDTH][HEIGHT];
 
+    void addToWorld(Creature *c, int x, int y);
     void addToWorld(Creature *c);
-
+    void add(Creature *c, int x, int y);
+    void add(Creature *c);
     void build();
 };
 
