@@ -28,15 +28,18 @@ void Monster::moveBy(int mx, int my)
 
 void Monster::act()
 {
-    int mx = rand() % 3 - 1;
-    int my = rand() % 3 - 1;
-    while(!(x + mx >= 0 && x + mx < world->width))
+    if(rand() % 2 == 0)
     {
-        mx = rand() % 3 - 1;
+        int mx = rand() % 3 - 1;
+        int my = rand() % 3 - 1;
+        while(!(x + mx >= 0 && x + mx < world->width))
+        {
+            mx = rand() % 3 - 1;
+        }
+        while(!(y + my >= 0 && y + my < world->height))
+        {
+            my = rand() % 3 - 1;
+        }
+        moveBy(mx, my);
     }
-    while(!(y + my >= 0 && y + my < world->height))
-    {
-        my = rand() % 3 - 1;
-    }
-    moveBy(mx, my);
 }

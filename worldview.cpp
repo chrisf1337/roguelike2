@@ -71,7 +71,7 @@ void displayTiles(WINDOW* window, int left, int top)
     }
 }
 
-void displayOutput(WINDOW *window)
+void drawWorldPane(WINDOW *window)
 {
     int left = getScrollX();
     int top = getScrollY();
@@ -89,9 +89,41 @@ void displayOutput(WINDOW *window)
     wattron(window, COLOR_PAIR(1));
     mvwprintw(window, player.y - top, player.x - left, "%c", player.glyph);
     wattroff(window, COLOR_PAIR(1));
+    wrefresh(window);
 }
 
-void updatePlayerStats(WINDOW *window)
+void drawBattlePane()
+{
+    WINDOW* battleScreen = create_newwin(2 * screenHeight / 3, 2 * screenWidth / 3,
+                                         screenHeight / 6, screenWidth / 6);
+    box(battleScreen, 0, 0);
+    wrefresh(battleScreen);
+}
+
+void drawDebugPane(WINDOW *debug)
+{
+    wclear(debug);
+    box(debug, 0, 0);
+    mvwprintw(debug, 1, 1, "%3d %3d", player.x, player.y);
+    mvwprintw(debug, 2, 1, "%d", world.tiles[player.x][player.y].type);
+    for(int i = 0; i < world.creatures.size(); i++)
+    {
+        mvwprintw(debug, i + 3, 1, "%3d %3d", world.creatures[i]->x, world.creatures[i]->y);
+    }
+    wrefresh(debug);
+}
+
+// window2 is the worldView window
+// calling wgetch with the battle pane causes an undesirable screen flicker
+void enterBattle(WINDOW *window1, WINDOW *window2)
+{
+    mvwprintw(window1, 5, 1, "Battle mode entered!");
+    wrefresh(window1);
+    drawBattlePane();
+    wgetch(window2);
+}
+
+void drawStatusPane(WINDOW *window)
 {
     wclear(window);
     box(window, 0, 0);
@@ -133,58 +165,51 @@ int main()
     screenWidth = COLS - 30;
     screenHeight = LINES - 10;
 
-    WINDOW* window = create_newwin(screenHeight, screenWidth, 0, 0);
+    WINDOW* worldView = create_newwin(screenHeight, screenWidth, 0, 0);
     WINDOW* debug = create_newwin(LINES - screenHeight, COLS, screenHeight, 0);
     WINDOW* status = create_newwin(screenHeight, COLS - screenWidth, 0, screenWidth);
-    keypad(window, TRUE);
+    keypad(worldView, TRUE);
 
 
-    world.add(&player, 99, 99);
+    world.add(&player);
 
     Monster m1(&world, "monster");
-    world.addToWorld(&m1, 99, 99);
+    world.addToWorld(&m1);
     Monster m2(&world, "monster");
-    world.addToWorld(&m2, 99, 99);
+    world.addToWorld(&m2);
 
-    displayOutput(window);
-    mvwprintw(debug, 1, 1, "%3d %3d", player.x, player.y);
-    mvwprintw(debug, 2, 1, "%d", world.tiles[player.x][player.y].type);
-    for(int i = 0; i < world.creatures.size(); i++)
-    {
-        mvwprintw(debug, i + 3, 1, "%3d %3d", world.creatures[i]->x, world.creatures[i]->y);
-
-    }
-    box(debug, 0, 0);
-
-    updatePlayerStats(status);
-
-    wrefresh(window);
-    wrefresh(debug);
-    wrefresh(status);
+    drawWorldPane(worldView);
+    drawDebugPane(debug);
+    drawStatusPane(status);
 
     int input;
-    while((input = wgetch(window)) != 113)
+
+    // main game loop
+    while((input = wgetch(worldView)) != 113)
     {
         respondToUserInput(input);
-        displayOutput(window);
-        mvwprintw(debug, 1, 1, "%3d %3d", player.x, player.y);
-        mvwprintw(debug, 2, 1, "%d", world.tiles[player.x][player.y].type);
-        for(int i = 0; i < world.creatures.size(); i++)
-        {
-            mvwprintw(debug, i + 3, 1, "%3d %3d", world.creatures[i]->x, world.creatures[i]->y);
-
-        }
         for(std::vector<Creature*>::iterator it = world.creatures.begin(); it != world.creatures.end(); it++)
         {
             (*it)->act();
         }
-        updatePlayerStats(status);
-        wrefresh(debug);
+        drawWorldPane(worldView);
+        drawDebugPane(debug);
+        for(std::vector<Creature*>::iterator it = world.creatures.begin(); it != world.creatures.end(); it++)
+        {
+            if((*it)->x == player.x && (*it)->y == player.y)
+            {
+                enterBattle(debug, worldView);
+                drawWorldPane(worldView);
+                drawDebugPane(debug);
+            }
+        }
+        drawStatusPane(status);
     }
     clrtoeol();
     endwin();
 }
 
+// starting menu
 int main2()
 {
     WINDOW *menu_win;
